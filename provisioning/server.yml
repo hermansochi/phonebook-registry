@@ -1,0 +1,8 @@
+---
+-   name: Set Up
+    hosts: server
+    remote_user: herman
+    become: yes
+    roles:
+        - docker
+        - registry

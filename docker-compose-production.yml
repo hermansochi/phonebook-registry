@@ -1,0 +1,44 @@
+version: '3.7'
+services:
+    nginx:
+        image: nginx:alpine
+        restart: always
+        ports:
+            - "80:80"
+            - "443:443"
+        volumes:
+            - /etc/letsencrypt:/etc/letsencrypt:ro
+            - /var/www/html:/var/www/html:ro
+            - ./docker/production/nginx/conf.d:/etc/nginx/conf.d:ro
+            - ./htpasswd:/etc/nginx/auth/htpasswd:ro
+        depends_on:
+            - registry
+            - cache-registry
+            - ui
+
+    registry:
+        image: registry:2
+        restart: always
+        volumes:
+            - registry:/var/lib/registry
+
+    cache-registry:
+        image: registry:2
+        restart: always
+        environment:
+            REGISTRY_PROXY_REMOTEURL: https://registry-1.docker.io
+            REGISTRY_STORAGE_DELETE_ENABLED: 1
+        volumes:
+            - cache-registry:/var/lib/registry
+
+    ui:
+        image: joxit/docker-registry-ui:1.5-static
+        environment:
+            - REGISTRY_TITLE=Private Docker Registry
+            - REGISTRY_URL=https://ui.hub.herman.team
+        depends_on:
+            - registry
+
+volumes:
+    registry:
+    cache-registry:

@@ -1,0 +1,5 @@
+certbot_email: hermansochi@ya.ru
+certbot_hosts:
+    - hub.herman.team
+    - cache-hub.herman.team
+
