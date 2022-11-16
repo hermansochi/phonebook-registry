@@ -1,6 +1,6 @@
 # The BSD License (BSD)
 
-Copyright © 2019 by Deworker.PRO All rights reserved.
+Copyright © 2021 by HermanSochi All rights reserved.
 
 > Redistribution and use in source and binary forms, with or without modification,
 > are permitted provided that the following conditions are met:

@@ -1,7 +1,7 @@
 ---
 -   name: Set Up
     hosts: server
-    remote_user: herman
+    remote_user: user
     become: yes
     roles:
         - docker

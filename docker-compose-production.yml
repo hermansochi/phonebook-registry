@@ -2,43 +2,58 @@ version: '3.7'
 services:
     nginx:
         image: nginx:alpine
-        restart: always
-        ports:
-            - "80:80"
-            - "443:443"
+        networks:
+            - traefik-public
         volumes:
-            - /etc/letsencrypt:/etc/letsencrypt:ro
-            - /var/www/html:/var/www/html:ro
             - ./docker/production/nginx/conf.d:/etc/nginx/conf.d:ro
             - ./htpasswd:/etc/nginx/auth/htpasswd:ro
-        depends_on:
-            - registry
-            - cache-registry
-            - ui
+        deploy:
+            labels:
+                - traefik.enable=true
+                - traefik.docker.network=traefik-public
+                - traefik.http.routers.hub.rule=Host(`hub.herman.team`)
+                - traefik.http.routers.hub.entrypoints=https
+                - traefik.http.routers.hub.service=hub
+                - traefik.http.services.hub.loadbalancer.server.port=80
+                - traefik.http.routers.hub.tls=true
+                - traefik.http.routers.hub.tls.certResolver=letsEncrypt
+
+                - traefik.http.routers.cache-hub.rule=Host(`cache-hub.herman.team`)
+                - traefik.http.routers.cache-hub.entrypoints=https
+                - traefik.http.routers.cache-hub.service=cache-hub
+                - traefik.http.services.cache-hub.loadbalancer.server.port=80
+                - traefik.http.routers.cache-hub.tls=true
+                - traefik.http.routers.cache-hub.tls.certResolver=letsEncrypt
+            placement:
+                    constraints: [node.role == manager]
 
     registry:
         image: registry:2
-        restart: always
+        environment:
+            - REGISTRY_STORAGE_DELETE_ENABLED=true
         volumes:
             - registry:/var/lib/registry
+        networks:
+            - traefik-public
+        deploy:
+            placement:
+                constraints: [node.role == manager]
 
     cache-registry:
         image: registry:2
-        restart: always
         environment:
             REGISTRY_PROXY_REMOTEURL: https://registry-1.docker.io
             REGISTRY_STORAGE_DELETE_ENABLED: 1
         volumes:
             - cache-registry:/var/lib/registry
-
-    ui:
-        image: joxit/docker-registry-ui:1.5-static
-        environment:
-            - REGISTRY_TITLE=Private Docker Registry
-            - REGISTRY_URL=https://ui.hub.herman.team
-        depends_on:
-            - registry
+        networks:
+            - traefik-public
 
 volumes:
     registry:
     cache-registry:
+    traefik-public-certs:
+
+networks:
+    traefik-public:
+        external: true
