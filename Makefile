@@ -28,5 +28,6 @@ deploy:
 	ssh deploy@${HOST} -p ${PORT} 'rm -rf registry && mkdir registry'
 	scp -P ${PORT} docker-compose-production.yml deploy@${HOST}:registry/docker-compose.yml
 	scp -P ${PORT} -r docker deploy@${HOST}:registry/docker
-	scp -P ${PORT} ${HTPASSWD_FILE} deploy@${HOST}:registry/htpasswd
-	ssh -o StrictHostKeyChecking=no deploy@${HOST} -p ${PORT} 'cd registry && docker stack deploy -c docker-compose.yml registry'
+	scp -P ${PORT} -r registry-config deploy@${HOST}:registry/registry-config
+	#scp -P ${PORT} ${HTPASSWD_FILE} deploy@${HOST}:registry/htpasswd
+	ssh -o StrictHostKeyChecking=no deploy@${HOST} -p ${PORT} 'cd registry && docker stack deploy --with-registry-auth -c docker-compose.yml registry'

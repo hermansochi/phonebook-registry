@@ -11,7 +11,7 @@ services:
             labels:
                 - traefik.enable=true
                 - traefik.docker.network=traefik-public
-                - traefik.http.routers.hub.rule=Host(`hub.herman.team`)
+                - traefik.http.routers.hub.rule=Host(`hub.herman.team/v2`)
                 - traefik.http.routers.hub.entrypoints=https
                 - traefik.http.routers.hub.service=hub
                 - traefik.http.services.hub.loadbalancer.server.port=80
@@ -24,23 +24,41 @@ services:
                 - traefik.http.services.cache-hub.loadbalancer.server.port=80
                 - traefik.http.routers.cache-hub.tls=true
                 - traefik.http.routers.cache-hub.tls.certResolver=letsEncrypt
-            placement:
-                    constraints: [node.role == manager]
+
+    ui:
+        image: joxit/docker-registry-ui:1.5-static
+        environment:
+            - DELETE_IMAGES=true
+            - REGISTRY_TITLE=Private Docker Registry
+            - REGISTRY_URL=http://registry:5000
+            - SINGLE_REGISTRY=true
+        networks:
+            - traefik-public
+        deploy:
+            labels:
+                - traefik.enable=true
+                - traefik.docker.network=traefik-public
+                - traefik.http.routers.hubui.rule=Host(`hub.herman.team`)
+                - traefik.http.routers.hubui.entrypoints=https
+                - traefik.http.routers.hubui.service=hubui
+                - traefik.http.services.hubui.loadbalancer.server.port=80
+                - traefik.http.routers.hubui.tls=true
+                - traefik.http.routers.hubui.tls.certResolver=letsEncrypt
 
     registry:
-        image: registry:2
+        image: registry:2.8
         environment:
             - REGISTRY_STORAGE_DELETE_ENABLED=true
         volumes:
             - registry:/var/lib/registry
+            - ./registry-config/credentials.yml:/etc/docker/registry/config.yml
+            - ./registry-config/htpasswd:/etc/docker/registry/htpasswd
         networks:
             - traefik-public
-        deploy:
-            placement:
-                constraints: [node.role == manager]
+
 
     cache-registry:
-        image: registry:2
+        image: registry:2.8
         environment:
             REGISTRY_PROXY_REMOTEURL: https://registry-1.docker.io
             REGISTRY_STORAGE_DELETE_ENABLED: 1

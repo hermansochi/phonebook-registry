@@ -6,3 +6,6 @@ authorize:
 
 upgrade:
 	ansible-playbook upgrade.yml -i hosts.yml
+
+docker-login:
+	ansible-playbook -i hosts.yml docker-login.yml
