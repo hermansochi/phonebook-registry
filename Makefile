@@ -23,6 +23,8 @@ docker run --rm registry:2.6 htpasswd -Bbn username password > htpasswd
 adduser:
 docker run --rm registry:2.6 htpasswd -B user1 password1 > htpasswd1
 
+
+
 deploy:
 	ssh -o StrictHostKeyChecking=no deploy@${HOST} -p ${PORT} 'docker network create --driver=overlay traefik-public || true'
 	ssh deploy@${HOST} -p ${PORT} 'rm -rf registry && mkdir registry'
