@@ -23,11 +23,9 @@ docker run --rm registry:2.6 htpasswd -Bbn username password > htpasswd
 adduser:
 docker run --rm registry:2.6 htpasswd -B user1 password1 > htpasswd1
 
-
-
 deploy:
 	ssh -o StrictHostKeyChecking=no deploy@${HOST} -p ${PORT} 'docker network create --driver=overlay traefik-public || true'
-	ssh deploy@${HOST} -p ${PORT} 'rm -rf registry && mkdir registry'
+	ssh -o StrictHostKeyChecking=no deploy@${HOST} -p ${PORT} 'rm -rf registry && mkdir registry'
 	scp -P ${PORT} docker-compose-production.yml deploy@${HOST}:registry/docker-compose.yml
 	scp -P ${PORT} -r docker deploy@${HOST}:registry/docker
 	scp -P ${PORT} -r registry-config deploy@${HOST}:registry/registry-config
