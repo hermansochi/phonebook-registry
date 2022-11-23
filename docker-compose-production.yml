@@ -1,29 +1,6 @@
 version: '3.7'
 services:
-    nginx:
-        image: nginx:alpine
-        networks:
-            - traefik-public
-        volumes:
-            - ./docker/production/nginx/conf.d:/etc/nginx/conf.d:ro
-            - ./htpasswd:/etc/nginx/auth/htpasswd:ro
-        deploy:
-            labels:
-                - traefik.enable=true
-                - traefik.docker.network=traefik-public
-                - traefik.http.routers.hub.rule=Host(`hub.herman.team/v2`)
-                - traefik.http.routers.hub.entrypoints=https
-                - traefik.http.routers.hub.service=hub
-                - traefik.http.services.hub.loadbalancer.server.port=80
-                - traefik.http.routers.hub.tls=true
-                - traefik.http.routers.hub.tls.certResolver=letsEncrypt
 
-                - traefik.http.routers.cache-hub.rule=Host(`cache-hub.herman.team`)
-                - traefik.http.routers.cache-hub.entrypoints=https
-                - traefik.http.routers.cache-hub.service=cache-hub
-                - traefik.http.services.cache-hub.loadbalancer.server.port=80
-                - traefik.http.routers.cache-hub.tls=true
-                - traefik.http.routers.cache-hub.tls.certResolver=letsEncrypt
 
     ui:
         image: joxit/docker-registry-ui:1.5-static
@@ -38,12 +15,15 @@ services:
             labels:
                 - traefik.enable=true
                 - traefik.docker.network=traefik-public
-                - traefik.http.routers.hubui.rule=Host(`hub.herman.team`)
-                - traefik.http.routers.hubui.entrypoints=https
-                - traefik.http.routers.hubui.service=hubui
-                - traefik.http.services.hubui.loadbalancer.server.port=80
-                - traefik.http.routers.hubui.tls=true
-                - traefik.http.routers.hubui.tls.certResolver=letsEncrypt
+                - traefik.constraint-label=traefik-public
+                - traefik.http.routers.hub-http.rule=Host(`hub.herman.team`)
+                - traefik.http.routers.hub-http.entrypoints=http
+                - traefik.http.routers.hub-http.middlewares=https-redirect
+                - traefik.http.routers.hub-https.rule=Host(`hub.herman.team`)
+                - traefik.http.routers.hub-https.entrypoints=https
+                - traefik.http.routers.hub-https.tls=true
+                - traefik.http.routers.hub-https.tls.certresolver=le
+                - traefik.http.services.hub.loadbalancer.server.port=80
 
     registry:
         image: registry:2.8
@@ -55,6 +35,10 @@ services:
             - ./registry-config/htpasswd:/etc/docker/registry/htpasswd
         networks:
             - traefik-public
+        deploy:
+            placement:
+                constraints:
+                - node.labels.registry.registry == true
 
 
     cache-registry:
@@ -66,6 +50,22 @@ services:
             - cache-registry:/var/lib/registry
         networks:
             - traefik-public
+        deploy:
+            labels:
+                - traefik.enable=true
+                - traefik.docker.network=traefik-public
+                - traefik.constraint-label=traefik-public
+                - traefik.http.routers.cache-hub-http.rule=Host(`cache-hub.herman.team`)
+                - traefik.http.routers.cache-hub-http.entrypoints=http
+                - traefik.http.routers.cache-hub-http.middlewares=https-redirect
+                - traefik.http.routers.cache-hub-https.rule=Host(`cache-hub.herman.team`)
+                - traefik.http.routers.cache-hub-https.entrypoints=https
+                - traefik.http.routers.cache-hub-https.tls=true
+                - traefik.http.routers.cache-hub-https.tls.certresolver=le
+                - traefik.http.services.cache-hub.loadbalancer.server.port=5000
+            placement:
+                constraints:
+                - node.labels.registry.cache-registry == true
 
 volumes:
     registry:
@@ -73,5 +73,8 @@ volumes:
     traefik-public-certs:
 
 networks:
+    registry-net:
+        driver: overlay
+        attachable: true
     traefik-public:
         external: true
