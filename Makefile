@@ -24,7 +24,7 @@ adduser:
 docker run --rm registry:2.6 htpasswd -B user1 password1 > htpasswd1
 
 deploy:
-	ssh -o StrictHostKeyChecking=no deploy@${HOST} -p ${PORT} 'docker network create --driver=overlay traefik-public || true'
+	ssh -o StrictHostKeyChecking=no deploy@${HOST} -p ${PORT} 'docker network create --driver=overlay --attachable traefik-public || true'
 	ssh -o StrictHostKeyChecking=no deploy@${HOST} -p ${PORT} 'export NODE_ID=$$(docker info -f "{{.Swarm.NodeID}}") ; echo NODE_ID=$$NODE_ID'
 	ssh -o StrictHostKeyChecking=no deploy@${HOST} -p ${PORT} 'docker node update --label-add registry.registry=true $$(docker info -f "{{.Swarm.NodeID}}")'
 	ssh -o StrictHostKeyChecking=no deploy@${HOST} -p ${PORT} 'docker node update --label-add registry.cache-registry=true $$(docker info -f "{{.Swarm.NodeID}}")'

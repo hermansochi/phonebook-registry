@@ -73,8 +73,5 @@ volumes:
     traefik-public-certs:
 
 networks:
-    registry-net:
-        driver: overlay
-        attachable: true
     traefik-public:
         external: true
