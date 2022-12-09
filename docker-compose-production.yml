@@ -1,7 +1,5 @@
 version: '3.7'
 services:
-
-
     ui:
         image: joxit/docker-registry-ui:1.5-static
         environment:
